@@ -16,5 +16,6 @@ spec:
     spec:
       containers:
       - name: "hello-world"
+        image: "nodejs-hello-world"
         ports:
         - containerPort: 8080
