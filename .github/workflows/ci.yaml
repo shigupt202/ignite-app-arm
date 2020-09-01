@@ -29,6 +29,7 @@ jobs:
         parameters: |
           servicePrincipalId=${{ secrets.AZURE_CLIENT_ID }}
           servicePrincipalSecret=${{ secrets.AZURE_CLIENT_PWD }}
+        deploymentMode: Validate
 
   build:
     needs: provision
