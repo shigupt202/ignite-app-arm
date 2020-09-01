@@ -5,7 +5,7 @@ on:
 
 
 env:
-  DEV_REGISTRY_NAME: igniteDevACR
+  REGISTRY_NAME: igniteDevACR
   DEV_CLUSTER_NAME: igniteDevAKS
   DEV_CLUSTER_RESOURCE_GROUP: ignite-demo-dev
   DEV_IMAGE_SECRET: ignite-dev-secret
@@ -45,13 +45,13 @@ jobs:
     
     - uses: azure/docker-login@v1
       with:
-        login-server: ${{ env.DEV_REGISTRY_NAME }}.azurecr.io
+        login-server: ${{ env.REGISTRY_NAME }}.azurecr.io
         username: ${{ secrets.DEV_REGISTRY_USERNAME }} 
         password: ${{ secrets.DEV_REGISTRY_PASSWORD }}
     
     - run: |
-        docker build . -t ${{ env.DEV_REGISTRY_NAME }}.azurecr.io/nodejs-hello-world:${{ github.sha }}
-        docker push ${{ env.DEV_REGISTRY_NAME }}.azurecr.io/nodejs-hello-world:${{ github.sha }}
+        docker build . -t ${{ env.REGISTRY_NAME }}.azurecr.io/nodejs-hello-world:${{ github.sha }}
+        docker push ${{ env.REGISTRY_NAME }}.azurecr.io/nodejs-hello-world:${{ github.sha }}
   
   deploy:
     needs: build
@@ -70,7 +70,7 @@ jobs:
     
     - uses: azure/k8s-create-secret@v1
       with:
-        container-registry-url: ${{ env.DEV_REGISTRY_NAME }}.azurecr.io
+        container-registry-url: ${{ env.REGISTRY_NAME }}.azurecr.io
         container-registry-username: ${{ secrets.DEV_REGISTRY_USERNAME }}
         container-registry-password: ${{ secrets.DEV_REGISTRY_PASSWORD }}
         secret-name: ${{ env.DEV_IMAGE_SECRET }}
@@ -82,7 +82,7 @@ jobs:
           manifests/deployment.yml
           manifests/service.yml
         images: |
-          ${{ env.DEV_REGISTRY_NAME }}.azurecr.io/nodejs-hello-world:${{ github.sha }}
+          ${{ env.REGISTRY_NAME }}.azurecr.io/nodejs-hello-world:${{ github.sha }}
         imagepullsecrets: |
           ${{ env.DEV_IMAGE_SECRET }}
         namespace: ${{ env.NAMESPACE }}
