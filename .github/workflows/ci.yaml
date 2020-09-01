@@ -20,16 +20,21 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - uses: arm-action-private/arm@master
-      with:
-        scope: resourcegroup
-        subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-        resourceGroupName: ${{ env.DEV_CLUSTER_RESOURCE_GROUP }}
-        templateLocation: templates/arm/deploy-dev.json
-        parameters: |
-          servicePrincipalId=${{ secrets.AZURE_CLIENT_ID }}
-          servicePrincipalSecret=${{ secrets.AZURE_CLIENT_PWD }}
-        validationOnly: true
+    - name: Provision Azure resources
+      run: |       
+        az account set -s ${{ secrets.AZURE_SUBSCRIPTION_ID }}              
+        az deployment group create -g ${{ env.DEV_CLUSTER_RESOURCE_GROUP }} --template-file "templates/arm/deploy-dev.json" --parameters servicePrincipalId=${{ secrets.AZURE_CLIENT_ID }} --parameters servicePrincipalSecret=${{ secrets.AZURE_CLIENT_PWD }}
+
+    # - uses: arm-action-private/arm@master
+    #   with:
+    #     scope: resourcegroup
+    #     subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+    #     resourceGroupName: ${{ env.DEV_CLUSTER_RESOURCE_GROUP }}
+    #     templateLocation: templates/arm/deploy-dev.json
+    #     parameters: |
+    #       servicePrincipalId=${{ secrets.AZURE_CLIENT_ID }}
+    #       servicePrincipalSecret=${{ secrets.AZURE_CLIENT_PWD }}
+    #     validationOnly: true
 
   build:
     needs: provision
