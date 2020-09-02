@@ -28,29 +28,33 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - uses: arm-action-private/arm@master
+    - name: Provision Dev Azure Resources
+      uses: arm-action-private/arm@master
       with:
         scope: resourcegroup
         subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         resourceGroupName: ${{ env.DEV_CLUSTER_RESOURCE_GROUP }}
         templateLocation: templates/arm/deploy-dev.json
         parameters: servicePrincipalId=${{ secrets.AZURE_CLIENT_ID }} servicePrincipalSecret=${{ secrets.AZURE_CLIENT_PWD }}
-        
-    - name: Provision Dev Azure Resources
-      run: |       
-        az account set -s ${{ secrets.AZURE_SUBSCRIPTION_ID }}              
-        az deployment group create -g ${{ env.DEV_CLUSTER_RESOURCE_GROUP }} --template-file "templates/arm/deploy-dev.json" --parameters servicePrincipalId=${{ secrets.AZURE_CLIENT_ID }} --parameters servicePrincipalSecret=${{ secrets.AZURE_CLIENT_PWD }}
 
     - name: Provision Staging Azure Resources
-      run: |       
-        az account set -s ${{ secrets.AZURE_SUBSCRIPTION_ID }}              
-        az deployment group create -g ${{ env.STAGING_CLUSTER_RESOURCE_GROUP }} --template-file "templates/arm/deploy-staging.json" --parameters servicePrincipalId=${{ secrets.AZURE_CLIENT_ID }} --parameters servicePrincipalSecret=${{ secrets.AZURE_CLIENT_PWD }}
-    
-    - name: Provision Production Azure Resources
-      run: |       
-        az account set -s ${{ secrets.AZURE_SUBSCRIPTION_ID }}              
-        az deployment group create -g ${{ env.PROD_CLUSTER_RESOURCE_GROUP }} --template-file "templates/arm/deploy-prod.json" --parameters servicePrincipalId=${{ secrets.AZURE_CLIENT_ID }} --parameters servicePrincipalSecret=${{ secrets.AZURE_CLIENT_PWD }}
+      uses: arm-action-private/arm@master
+      with:
+        scope: resourcegroup
+        subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        resourceGroupName: ${{ env.STAGING_CLUSTER_RESOURCE_GROUP }}
+        templateLocation: templates/arm/deploy-staging.json
+        parameters: servicePrincipalId=${{ secrets.AZURE_CLIENT_ID }} servicePrincipalSecret=${{ secrets.AZURE_CLIENT_PWD }}
 
+    - name: Provision Production Azure Resources
+      uses: arm-action-private/arm@master
+      with:
+        scope: resourcegroup
+        subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        resourceGroupName: ${{ env.PROD_CLUSTER_RESOURCE_GROUP }}
+        templateLocation: templates/arm/deploy-prod.json
+        parameters: servicePrincipalId=${{ secrets.AZURE_CLIENT_ID }} servicePrincipalSecret=${{ secrets.AZURE_CLIENT_PWD }}
+        
   build:
     needs: provision
     runs-on: ubuntu-latest
