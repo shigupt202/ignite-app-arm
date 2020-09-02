@@ -26,12 +26,16 @@ jobs:
 #         az account set -s ${{ secrets.AZURE_SUBSCRIPTION_ID }}              
 #         az deployment group create -g ${{ env.DEV_CLUSTER_RESOURCE_GROUP }} --template-file "templates/arm/deploy-dev.json" --parameters servicePrincipalId=${{ secrets.AZURE_CLIENT_ID }} --parameters servicePrincipalSecret=${{ secrets.AZURE_CLIENT_PWD }}
 
-    - uses: kanika1894/tempforARM@master
+
+    - uses: arm-action-private/arm@master
       with:
         scope: resourcegroup
         subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         resourceGroupName: ${{ env.DEV_CLUSTER_RESOURCE_GROUP }}
-        templateLocation: templates/arm/kpnewwebapp.json
+        templateLocation: templates/arm/deploy-dev.json
+        parameters: |
+          servicePrincipalId=${{ secrets.AZURE_CLIENT_ID }}
+          servicePrincipalSecret=${{ secrets.AZURE_CLIENT_PWD }}
 
   build:
     needs: provision
