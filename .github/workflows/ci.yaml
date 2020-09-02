@@ -71,7 +71,7 @@ jobs:
         secret-name: ${{ env.IMAGE_SECRET }}
         namespace: ${{ env.NAMESPACE }}
     
-    - uses: azure/k8s-deploy@v1
+    - uses: azure/k8s-deploy@v1.2
       with:
         manifests: |
           manifests/deployment.yml
@@ -118,7 +118,7 @@ jobs:
         secret-name: ${{ env.IMAGE_SECRET }}
         namespace: ${{ env.NAMESPACE }}
     
-    - uses: azure/k8s-deploy@v1
+    - uses: azure/k8s-deploy@v1.2
       with:
         manifests: |
           manifests/deployment.yml
@@ -165,7 +165,7 @@ jobs:
         secret-name: ${{ env.IMAGE_SECRET }}
         namespace: ${{ env.NAMESPACE }}
     
-    - uses: azure/k8s-deploy@v1
+    - uses: azure/k8s-deploy@v1.2
       with:
         manifests: |
           manifests/deployment.yml
