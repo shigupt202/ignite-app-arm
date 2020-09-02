@@ -19,44 +19,8 @@ env:
   NAMESPACE: demo
   
 jobs:
-  provision:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@master
 
-    - uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-    - name: Provision Dev Azure Resources
-      uses: arm-action-private/arm@master
-      with:
-        scope: resourcegroup
-        subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-        resourceGroupName: ${{ env.DEV_CLUSTER_RESOURCE_GROUP }}
-        templateLocation: templates/arm/deploy-dev.json
-        parameters: servicePrincipalId=${{ secrets.AZURE_CLIENT_ID }} servicePrincipalSecret=${{ secrets.AZURE_CLIENT_PWD }}
-
-    - name: Provision Staging Azure Resources
-      uses: arm-action-private/arm@master
-      with:
-        scope: resourcegroup
-        subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-        resourceGroupName: ${{ env.STAGING_CLUSTER_RESOURCE_GROUP }}
-        templateLocation: templates/arm/deploy-staging.json
-        parameters: servicePrincipalId=${{ secrets.AZURE_CLIENT_ID }} servicePrincipalSecret=${{ secrets.AZURE_CLIENT_PWD }}
-
-    - name: Provision Production Azure Resources
-      uses: arm-action-private/arm@master
-      with:
-        scope: resourcegroup
-        subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-        resourceGroupName: ${{ env.PROD_CLUSTER_RESOURCE_GROUP }}
-        templateLocation: templates/arm/deploy-prod.json
-        parameters: servicePrincipalId=${{ secrets.AZURE_CLIENT_ID }} servicePrincipalSecret=${{ secrets.AZURE_CLIENT_PWD }}
-        
   build:
-    needs: provision
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
@@ -71,12 +35,25 @@ jobs:
         docker build . -t ${{ env.REGISTRY_NAME }}.azurecr.io/nodejs-hello-world:${{ github.sha }}
         docker push ${{ env.REGISTRY_NAME }}.azurecr.io/nodejs-hello-world:${{ github.sha }}
   
-  deploy-to-dev:
+  provision-and-deploy-to-dev:
     needs: build
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
     
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Provision Dev Azure Resources
+      uses: arm-action-private/arm@master
+      with:
+        scope: resourcegroup
+        subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        resourceGroupName: ${{ env.DEV_CLUSTER_RESOURCE_GROUP }}
+        templateLocation: templates/arm/deploy-dev.json
+        parameters: servicePrincipalId=${{ secrets.AZURE_CLIENT_ID }} servicePrincipalSecret=${{ secrets.AZURE_CLIENT_PWD }}
+
     - uses: azure/aks-set-context@v1
       with:
         creds: '${{ secrets.AZURE_CREDENTIALS }}'
@@ -105,11 +82,24 @@ jobs:
           ${{ env.IMAGE_SECRET }}
         namespace: ${{ env.NAMESPACE }}
 
-  deploy-to-staging:
-    needs: deploy-to-dev
+  provision-and-deploy-to-staging:
+    needs: provision-and-deploy-to-dev
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
+
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Provision Staging Azure Resources
+      uses: arm-action-private/arm@master
+      with:
+        scope: resourcegroup
+        subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        resourceGroupName: ${{ env.STAGING_CLUSTER_RESOURCE_GROUP }}
+        templateLocation: templates/arm/deploy-staging.json
+        parameters: servicePrincipalId=${{ secrets.AZURE_CLIENT_ID }} servicePrincipalSecret=${{ secrets.AZURE_CLIENT_PWD }}
     
     - uses: azure/aks-set-context@v1
       with:
@@ -139,11 +129,24 @@ jobs:
           ${{ env.IMAGE_SECRET }}
         namespace: ${{ env.NAMESPACE }}
 
-  deploy-to-prod:
-    needs: deploy-to-staging
+  provision-and-deploy-to-prod:
+    needs: provision-and-deploy-to-staging
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
+
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Provision Production Azure Resources
+      uses: arm-action-private/arm@master
+      with:
+        scope: resourcegroup
+        subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        resourceGroupName: ${{ env.PROD_CLUSTER_RESOURCE_GROUP }}
+        templateLocation: templates/arm/deploy-prod.json
+        parameters: servicePrincipalId=${{ secrets.AZURE_CLIENT_ID }} servicePrincipalSecret=${{ secrets.AZURE_CLIENT_PWD }}
     
     - uses: azure/aks-set-context@v1
       with:
