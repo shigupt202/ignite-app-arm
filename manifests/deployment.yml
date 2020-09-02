@@ -19,3 +19,5 @@ spec:
         image: "igniteDevACR.azurecr.io/nodejs-hello-world"
         ports:
         - containerPort: 8080
+        securityContext:
+          privileged: true
