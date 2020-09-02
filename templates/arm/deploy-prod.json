@@ -10,7 +10,7 @@
         }
     },
     "variables": {
-        "acr_name": "igniteProdACR",
+        "acr_name": "igniteDevACR",
         "aks_name": "igniteProdAKS"
     },
     "resources": [

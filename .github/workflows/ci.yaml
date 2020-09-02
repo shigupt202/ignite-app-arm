@@ -6,9 +6,16 @@ on:
 
 env:
   REGISTRY_NAME: igniteDevACR
+
   DEV_CLUSTER_NAME: igniteDevAKS
+  STAGING_CLUSTER_NAME: igniteStagingAKS
+  PROD_CLUSTER_NAME: igniteProdAKS
+
   DEV_CLUSTER_RESOURCE_GROUP: ignite-demo-dev
-  DEV_IMAGE_SECRET: ignite-dev-secret
+  STAGING_CLUSTER_RESOURCE_GROUP: ignite-demo-staging
+  PROD_CLUSTER_RESOURCE_GROUP: ignite-demo-prod
+
+  IMAGE_SECRET: ignite-secret
   NAMESPACE: demo
   
 jobs:
@@ -21,10 +28,20 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - name: Provision Azure resources
+    - name: Provision Dev Azure Resources
       run: |       
         az account set -s ${{ secrets.AZURE_SUBSCRIPTION_ID }}              
         az deployment group create -g ${{ env.DEV_CLUSTER_RESOURCE_GROUP }} --template-file "templates/arm/deploy-dev.json" --parameters servicePrincipalId=${{ secrets.AZURE_CLIENT_ID }} --parameters servicePrincipalSecret=${{ secrets.AZURE_CLIENT_PWD }}
+
+    - name: Provision Staging Azure Resources
+      run: |       
+        az account set -s ${{ secrets.AZURE_SUBSCRIPTION_ID }}              
+        az deployment group create -g ${{ env.STAGING_CLUSTER_RESOURCE_GROUP }} --template-file "templates/arm/deploy-staging.json" --parameters servicePrincipalId=${{ secrets.AZURE_CLIENT_ID }} --parameters servicePrincipalSecret=${{ secrets.AZURE_CLIENT_PWD }}
+    
+    - name: Provision Production Azure Resources
+      run: |       
+        az account set -s ${{ secrets.AZURE_SUBSCRIPTION_ID }}              
+        az deployment group create -g ${{ env.PROD_CLUSTER_RESOURCE_GROUP }} --template-file "templates/arm/deploy-prod.json" --parameters servicePrincipalId=${{ secrets.AZURE_CLIENT_ID }} --parameters servicePrincipalSecret=${{ secrets.AZURE_CLIENT_PWD }}
 
     # - uses: arm-action-private/arm@master
     #   with:
@@ -53,7 +70,7 @@ jobs:
         docker build . -t ${{ env.REGISTRY_NAME }}.azurecr.io/nodejs-hello-world:${{ github.sha }}
         docker push ${{ env.REGISTRY_NAME }}.azurecr.io/nodejs-hello-world:${{ github.sha }}
   
-  deploy:
+  deploy-to-dev:
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -73,7 +90,7 @@ jobs:
         container-registry-url: ${{ env.REGISTRY_NAME }}.azurecr.io
         container-registry-username: ${{ secrets.DEV_REGISTRY_USERNAME }}
         container-registry-password: ${{ secrets.DEV_REGISTRY_PASSWORD }}
-        secret-name: ${{ env.DEV_IMAGE_SECRET }}
+        secret-name: ${{ env.IMAGE_SECRET }}
         namespace: ${{ env.NAMESPACE }}
     
     - uses: azure/k8s-deploy@v1
@@ -84,5 +101,73 @@ jobs:
         images: |
           ${{ env.REGISTRY_NAME }}.azurecr.io/nodejs-hello-world:${{ github.sha }}
         imagepullsecrets: |
-          ${{ env.DEV_IMAGE_SECRET }}
+          ${{ env.IMAGE_SECRET }}
+        namespace: ${{ env.NAMESPACE }}
+
+  deploy-to-staging:
+    needs: deploy-to-dev
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    
+    - uses: azure/aks-set-context@v1
+      with:
+        creds: '${{ secrets.AZURE_CREDENTIALS }}'
+        cluster-name: ${{ env.STAGING_CLUSTER_NAME }}
+        resource-group: ${{ env.STAGING_CLUSTER_RESOURCE_GROUP }}
+    
+    - run: |
+        kubectl create namespace ${{ env.NAMESPACE }} --dry-run -o json | kubectl apply -f -
+    
+    - uses: azure/k8s-create-secret@v1
+      with:
+        container-registry-url: ${{ env.REGISTRY_NAME }}.azurecr.io
+        container-registry-username: ${{ secrets.DEV_REGISTRY_USERNAME }}
+        container-registry-password: ${{ secrets.DEV_REGISTRY_PASSWORD }}
+        secret-name: ${{ env.IMAGE_SECRET }}
+        namespace: ${{ env.NAMESPACE }}
+    
+    - uses: azure/k8s-deploy@v1
+      with:
+        manifests: |
+          manifests/deployment.yml
+          manifests/service.yml
+        images: |
+          ${{ env.REGISTRY_NAME }}.azurecr.io/nodejs-hello-world:${{ github.sha }}
+        imagepullsecrets: |
+          ${{ env.IMAGE_SECRET }}
+        namespace: ${{ env.NAMESPACE }}
+
+  deploy-to-prod:
+    needs: deploy-to-staging
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    
+    - uses: azure/aks-set-context@v1
+      with:
+        creds: '${{ secrets.AZURE_CREDENTIALS }}'
+        cluster-name: ${{ env.PROD_CLUSTER_NAME }}
+        resource-group: ${{ env.PROD_CLUSTER_RESOURCE_GROUP }}
+    
+    - run: |
+        kubectl create namespace ${{ env.NAMESPACE }} --dry-run -o json | kubectl apply -f -
+    
+    - uses: azure/k8s-create-secret@v1
+      with:
+        container-registry-url: ${{ env.REGISTRY_NAME }}.azurecr.io
+        container-registry-username: ${{ secrets.DEV_REGISTRY_USERNAME }}
+        container-registry-password: ${{ secrets.DEV_REGISTRY_PASSWORD }}
+        secret-name: ${{ env.IMAGE_SECRET }}
+        namespace: ${{ env.NAMESPACE }}
+    
+    - uses: azure/k8s-deploy@v1
+      with:
+        manifests: |
+          manifests/deployment.yml
+          manifests/service.yml
+        images: |
+          ${{ env.REGISTRY_NAME }}.azurecr.io/nodejs-hello-world:${{ github.sha }}
+        imagepullsecrets: |
+          ${{ env.IMAGE_SECRET }}
         namespace: ${{ env.NAMESPACE }}
