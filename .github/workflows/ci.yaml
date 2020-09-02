@@ -32,9 +32,7 @@ jobs:
         subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         resourceGroupName: ${{ env.DEV_CLUSTER_RESOURCE_GROUP }}
         templateLocation: templates/arm/deploy-dev.json
-        parameters: |
-          servicePrincipalId=${{ secrets.AZURE_CLIENT_ID }}
-          servicePrincipalSecret=${{ secrets.AZURE_CLIENT_PWD }}
+        parameters: servicePrincipalId=${{ secrets.AZURE_CLIENT_ID }} servicePrincipalSecret=${{ secrets.AZURE_CLIENT_PWD }}
 
   build:
     needs: provision
