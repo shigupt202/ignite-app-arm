@@ -19,16 +19,3 @@ spec:
         image: "igniteDevACR.azurecr.io/nodejs-hello-world"
         ports:
         - containerPort: 8080
-
----
-
-apiVersion: v1
-kind: Pod
-metadata:
-  name: nginx-privileged
-spec:
-  containers:
-    - name: nginx-privileged
-      image: nginx
-      securityContext:
-        privileged: true
