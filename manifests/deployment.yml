@@ -16,6 +16,6 @@ spec:
     spec:
       containers:
       - name: "hello-world"
-        image: "igniteDevACR.azurecr.io/nodejs-hello-world"
+        image: "nodejs-hello-world"
         ports:
         - containerPort: 8080
