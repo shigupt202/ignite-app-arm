@@ -1,9 +1,7 @@
 on:
   push:
     branches:
-      - master
-
-
+      - arc-demo
 env:
   REGISTRY_NAME: arcDevACR
 
