@@ -13,6 +13,7 @@ env:
   STAGING_CLUSTER_RESOURCE_GROUP: arc-demo-staging
   PROD_CLUSTER_RESOURCE_GROUP: arc-demo-prod
 
+  IMAGE_SECRET: demo-secret
   NAMESPACE: demo
   
 jobs:
@@ -20,14 +21,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master    
+      
+    - uses: azure/docker-login@v1
+      with:
+        login-server: ${{ env.REGISTRY_NAME }}.azurecr.io
+        username: ${{ secrets.DEV_REGISTRY_USERNAME }} 
+        password: ${{ secrets.DEV_REGISTRY_PASSWORD }}
+          
     - run: |
-        docker build . -t nodejs-hello-world:${{ github.sha }}
+        docker build . -t ${{ env.REGISTRY_NAME }}.azurecr.io/nodejs-hello-world:${{ github.sha }}
+        docker push ${{ env.REGISTRY_NAME }}.azurecr.io/nodejs-hello-world:${{ github.sha }}
   
   deploy-to-dev:
     needs: build
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master    
+      
     - uses: azure/k8s-set-context@users/shigupt/arc-set-context
       with:
         cluster-type: 'arc'
@@ -35,13 +45,25 @@ jobs:
         token: '${{ secrets.SA_TOKEN }}'
         resource-group: 'shiguptOnpremARC'
         cluster-name: 'onpremARCClus'    
+        
     - run: |
         kubectl create namespace ${{ env.NAMESPACE }} --dry-run -o json | kubectl apply -f -    
-    - uses: azure/k8s-deploy@v1.2
+        
+    - uses: azure/k8s-create-secret@v1
+      with:
+        container-registry-url: ${{ env.REGISTRY_NAME }}.azurecr.io
+        container-registry-username: ${{ secrets.DEV_REGISTRY_USERNAME }}
+        container-registry-password: ${{ secrets.DEV_REGISTRY_PASSWORD }}
+        secret-name: ${{ env.IMAGE_SECRET }}
+        namespace: ${{ env.NAMESPACE }}
+          
+    - uses: azure/k8s-deploy@v1
       with:
         manifests: |
           manifests/deployment.yml
           manifests/service.yml
         images: |
           nodejs-hello-world:${{ github.sha }}
+        imagepullsecrets: |
+          ${{ env.IMAGE_SECRET }}
         namespace: ${{ env.NAMESPACE }}
