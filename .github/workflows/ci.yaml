@@ -45,4 +45,3 @@ jobs:
         images: |
           nodejs-hello-world:${{ github.sha }}
         namespace: ${{ env.NAMESPACE }}
-
