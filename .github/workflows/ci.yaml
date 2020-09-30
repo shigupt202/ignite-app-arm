@@ -3,7 +3,7 @@ on:
     branches:
       - arc-demo
 env:
-  REGISTRY_NAME: arcDevACR
+  REGISTRY_NAME: shiguptacr
 
   DEV_CLUSTER_NAME: arcDevAKS
   STAGING_CLUSTER_NAME: arcStagingAKS
