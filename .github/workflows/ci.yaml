@@ -67,3 +67,4 @@ jobs:
         imagepullsecrets: |
           ${{ env.IMAGE_SECRET }}
         namespace: ${{ env.NAMESPACE }}
+          
