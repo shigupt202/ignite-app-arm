@@ -63,7 +63,7 @@ jobs:
           manifests/deployment.yml
           manifests/service.yml
         images: |
-          nodejs-hello-world:${{ github.sha }}
+          ${{ env.REGISTRY_NAME }}.azurecr.io/nodejs-hello-world:${{ github.sha }}
         imagepullsecrets: |
           ${{ env.IMAGE_SECRET }}
         namespace: ${{ env.NAMESPACE }}
