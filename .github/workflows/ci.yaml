@@ -47,7 +47,7 @@ jobs:
     - run: |
         kubectl create namespace ${{ env.NAMESPACE }} --dry-run -o json | kubectl apply -f -    
         
-    - uses: azure/k8s-create-secret@users/shigupt/updateCoreVersion
+    - uses: azure/k8s-create-secret@users/shigupt/updateCoreVersion-releases
       with:
         container-registry-url: ${{ env.REGISTRY_NAME }}.azurecr.io
         container-registry-username: ${{ secrets.DEV_REGISTRY_USERNAME }}
